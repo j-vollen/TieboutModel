@@ -27,7 +27,7 @@ class Jurisdiction:
              in self._world.get_agent_list()
              if agent.address == self._address])
 
-    # This is where the platform updating is called from.
+    # This is where the platform adaption is called from.
     @property
     def platformList(self):
 
@@ -44,20 +44,18 @@ class Jurisdiction:
             return np.where(np.median(self.agentList, axis=0) > 0, 1, 0)
         # Otherwise, the platforms will iteratively adapt, and then we'll set the policy.
         parties = self.platformList
-        # this gives us a matrix with rows being agents and columns being parties, values are the agents' utilities
-        agentUtilities = np.matmul(self.agentList, parties.T)
-        # Yields a vector of length of jurisdiction's agentList, indicating each one's party preference
-        agentVotes = np.argmax(agentUtilities, axis=1)
+        # Simulate poll of current party platforms to determine winner based on institution (below)
+        voteCounts = self.poll(parties)
         # For Direct Competition, we just take the plurality winner, a.k.a. the platform with the most votes
         if institution == 'direct competition':
-            return parties[scipy.stats.mode(agentVotes).mode,]
+            return parties[scipy.stats.mode(voteCounts).mode,]
         # For Proportional Representation, we weight the platforms by the normalized amount of votes each received,
         # and round the final platform to the nearest whole number (i.e. if >0.5 then 1 o/w 0)
         if institution == 'proportional representation':
             # two lists: unique yielding each unique party preference, and number of agents w/ this preference
-            unique, votes = np.unique(agentVotes, return_counts=True)
+            unique, votes = np.unique(voteCounts, return_counts=True)
             # zip together into dictionary of party and number of votes, normalize vote counts so sum to 1
-            proportions = dict(zip(unique, votes / len(agentVotes)))
+            proportions = dict(zip(unique, votes / len(voteCounts)))
             # multiply normalized votes by corresponding party platforms and sum for weighted population preferences
                 # then round to nearest integer (0 or 1) for each issue. Result is final policy.
             return np.rint(sum(prop * parties[key,]
@@ -73,12 +71,16 @@ class Jurisdiction:
 
     """Given the current state of the jurisdiction's agent list and party list, run a poll returning the number of
         votes each party receives as a dictionary"""
-    def poll(self)
+    def poll(self, platforms):
+        # this gives us a matrix with rows being agents and columns being parties, values are the agents' utilities
+        agentUtilities = np.matmul(self.agentList, platforms.T)
+        # Yields a vector of length of jurisdiction's agentList, indicating each one's party preference
+        return np.argmax(agentUtilities, axis=1)
+
 
 
 
 ### Biggest questions
-    #3 HOW WILL POLL WORK??
-        # I think it will actually be a function used to do both poll and actually evaluate policy
-        # We need separate functions for each referendum, direct competition, and proportional rep.
-        # or a function that takes the institution flag as input.
+    #1 Time to code adaptive platforms.
+        # Need to decide whether to do it in the platformList property code, or to do it in a separate function
+        # and to mutate the platformList attribute. More of a best practice question
