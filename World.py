@@ -19,7 +19,6 @@ class World:
     # cycle method - pseudo-code
         # update and get all jurisdiction's policies (this is very involved on the jurisdiction/party level)
         # reassign agents addresses (of jurisdictions) based on preferences/policies
-
     def cycle(self, times=1):
         if times == 0:
             return self

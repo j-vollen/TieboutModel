@@ -12,11 +12,14 @@ class Agent:
         self._address = address
         self.preferences = preferences
 
+    # Create random agent given world
     @classmethod
     def random(cls, world):
         numIssues = world.get_num_issues()
         return cls(world,
+                   # Assign agent to jurisdiction given number of jurisdictions in world
                    address=random.randint(0, world.get_num_jurisdictions() - 1),
+                   # Randomly assign preferences to agent given number of issues in world
                    preferences=np.random.uniform(-400/numIssues, 400/numIssues, size=numIssues))
 
     # Given a binary vector representing a set of policies,

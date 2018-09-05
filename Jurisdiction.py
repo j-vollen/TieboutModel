@@ -54,8 +54,12 @@ class Jurisdiction:
         # For Proportional Representation, we weight the platforms by the normalized amount of votes each received,
         # and round the final platform to the nearest whole number (i.e. if >0.5 then 1 o/w 0)
         if institution == 'proportional representation':
+            # two lists: unique yielding each unique party preference, and number of agents w/ this preference
             unique, votes = np.unique(agentVotes, return_counts=True)
+            # zip together into dictionary of party and number of votes, normalize vote counts so sum to 1
             proportions = dict(zip(unique, votes / len(agentVotes)))
+            # multiply normalized votes by corresponding party platforms and sum for weighted population preferences
+                # then round to nearest integer (0 or 1) for each issue. Result is final policy.
             return np.rint(sum(prop * parties[key,]
                                for key, prop in proportions.items()))
 
@@ -74,6 +78,7 @@ class Jurisdiction:
 
 
 ### Biggest questions
-    #1 Should we have a different constructor for each institution?
-    #2 Do we actually need a separate class for parties of should all that stuff be done in a comprehensive jurisdiction class?
     #3 HOW WILL POLL WORK??
+        # I think it will actually be a function used to do both poll and actually evaluate policy
+        # We need separate functions for each referendum, direct competition, and proportional rep.
+        # or a function that takes the institution flag as input.
