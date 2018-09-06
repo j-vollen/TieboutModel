@@ -6,7 +6,7 @@ import scipy.stats
 class Jurisdiction:
     """A stationary local jurisdiction with static political institutions and parties but dynamic voters."""
 
-    _platformList = []
+    platformList = []
     agentList = []
 
     # Constructor Method
@@ -16,7 +16,7 @@ class Jurisdiction:
         self._numParties = numParties
         #NOTE: I COULD ALSO ACHIEVE THIS WITH A PROPERTY GETTER/SETTER
         if numParties > 0:
-            self._platformList = np.random.choice([0,1], size=(numParties,world.get_num_issues()))
+            self.platformList = np.random.choice([0,1], size=(numParties,world.get_num_issues()))
 
     """Agent list filters the world's agent list on those mapped to this jurisdiction and puts together a 2-D array
         of their preferences, each row being an agent, and each column being an issue."""
@@ -27,13 +27,6 @@ class Jurisdiction:
              in self._world.get_agent_list()
              if agent.address == self._address])
 
-    # This is where the platform adaption is called from.
-    @property
-    def platformList(self):
-
-    @platformList.setter
-    def platformList(self, value):
-        self._platformList = value
 
     """Given the world's political institution, updates the jurisdiction's policy after adapting platforms."""
     @property
@@ -43,9 +36,10 @@ class Jurisdiction:
         if institution == 'referendum':
             return np.where(np.median(self.agentList, axis=0) > 0, 1, 0)
         # Otherwise, the platforms will iteratively adapt, and then we'll set the policy.
+        self.adaptPlatforms()
         parties = self.platformList
         # Simulate poll of current party platforms to determine winner based on institution (below)
-        voteCounts = self.poll(parties)
+        voteCounts = self.poll(parties, election=True)
         # For Direct Competition, we just take the plurality winner, a.k.a. the platform with the most votes
         if institution == 'direct competition':
             return parties[scipy.stats.mode(voteCounts).mode,]
@@ -65,22 +59,51 @@ class Jurisdiction:
     def address(self):
         return self._address
 
-    """Given the world's search heuristic, this function adapts parties' platforms iteratively."""
-    def adapt_platforms(self):
-        return self
+
+    # This is where the platform adaption is called from.
+    # Hill-climbing: 8 iterations for each party 5 times, perturbing policy randomly on up to 3 issues.
+    @classmethod
+    def adaptPlatforms(cls, times=5):
+        pList = cls._platformList
+        numIssues = np.shape(pList)[1]
+
+        # 5 Cycles of adapting each party's platform
+        for _ in np.arange(times):
+            # Each party in jurisdiction
+            for party in cls._numParties:
+                # 8 adaptations for each party
+                for _ in np.arange(8):
+                    # temporary array which we will perturb and compare against status quo
+                    temp = pList
+                    # We choose 1-3 (randomly) issues to perturb, i.e. switch from 0 to 1 or vice versa
+                    perturbations = np.random.choice(numIssues,
+                                                     size=min(random.randint(1,3), numIssues),
+                                                     replace=True)
+                    # Each place we've decided to perturb, we switch from 0 to 1 or vice versa
+                    for p in perturbations:
+                        temp[party, p] = not temp[party, p]
+
+                    # Now we compare the results of temp and pList and re-define pList if temp performs better
+                    pList = temp if cls.poll(temp)[party] > cls.poll(pList)[party] else pList
+
+        # The end results: update the platform list with our adapted platforms
+        cls.platformList = pList
+
+
 
     """Given the current state of the jurisdiction's agent list and party list, run a poll returning the number of
         votes each party receives as a dictionary"""
-    def poll(self, platforms):
+    def poll(self, platforms, election=False):
         # this gives us a matrix with rows being agents and columns being parties, values are the agents' utilities
         agentUtilities = np.matmul(self.agentList, platforms.T)
         # Yields a vector of length of jurisdiction's agentList, indicating each one's party preference
-        return np.argmax(agentUtilities, axis=1)
+        votes = np.argmax(agentUtilities, axis=1)
 
-
-
-
-### Biggest questions
-    #1 Time to code adaptive platforms.
-        # Need to decide whether to do it in the platformList property code, or to do it in a separate function
-        # and to mutate the platformList attribute. More of a best practice question
+        if election:
+            return votes
+        else:
+            # two lists: unique yielding each unique party preference, and number of agents w/ this preference
+            unique, tally = np.unique(votes, return_counts=True)
+            # zip together into dictionary of party and number of votes
+            return dict(zip(unique, tally))
+        
