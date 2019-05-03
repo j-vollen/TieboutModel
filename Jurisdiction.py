@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import World
 import scipy.stats
 
 class Jurisdiction:
@@ -9,12 +8,12 @@ class Jurisdiction:
     platformList = []
     agentList = []
 
-    # Constructor Method
+    """ Constructor Method """
     def __init__(self, world, address, numParties = 0):
         self._address = address
         self._world = world
         self._numParties = numParties
-        #NOTE: I COULD ALSO ACHIEVE THIS WITH A PROPERTY GETTER/SETTER
+        # NOTE: I COULD ALSO ACHIEVE THIS WITH A PROPERTY GETTER/SETTER
         if numParties > 0:
             self.platformList = np.random.choice([0,1], size=(numParties,world.get_num_issues()))
 
@@ -31,7 +30,7 @@ class Jurisdiction:
     """Given the world's political institution, updates the jurisdiction's policy after adapting platforms."""
     @property
     def policy(self):
-        institution = self.world.get_institution()
+        institution = self._world.get_institution()
         # For referendums, we set the median voter policy, and return
         if institution == 'referendum':
             return np.where(np.median(self.agentList, axis=0) > 0, 1, 0)
@@ -60,8 +59,9 @@ class Jurisdiction:
         return self._address
 
 
-    # This is where the platform adaption is called from.
-    # Hill-climbing: 8 iterations for each party 5 times, perturbing policy randomly on up to 3 issues.
+    """adaptPlatforms method
+        This is where the platform adaption is called from.
+        Hill-climbing: 8 iterations for each party 5 times, perturbing policy randomly on up to 3 issues."""
     @classmethod
     def adaptPlatforms(cls, times=5):
         pList = cls._platformList
@@ -106,4 +106,3 @@ class Jurisdiction:
             unique, tally = np.unique(votes, return_counts=True)
             # zip together into dictionary of party and number of votes
             return dict(zip(unique, tally))
-        
