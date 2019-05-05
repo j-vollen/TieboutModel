@@ -17,7 +17,7 @@ class World:
 
     utility = []
 
-    def __init__(self, numIssues, numAgents, numJurisdictions, institution="referendum"):
+    def __init__(self, numIssues, numAgents, numJurisdictions, institution='referendum'):
         self._institution = institution
         self._numIssues = numIssues
         self._numAgents = numAgents
@@ -65,23 +65,40 @@ class World:
     def get_jurisdiction_list(self):
         return self._jurisdictionList
 
+"""Runs Tiebout cycle specified number of times for specified number of trials for specified parameters.
+    Repeats this process for each institution specified and combines all results into dataframe for output.
+    NOTE: still need to add functionality of list of party counts"""
 def compareTiebout(numIssues, numAgents, numJurisdictions,
                    numTrials, numCycles, institutionList):
+
+    # Empty shell of output dataframe
+    result = pd.DataFrame()
+    # Cycle through all institutions we want to summarize
     for institution in institutionList:
-        for _ in range(numTrials):
+        # Need to repeat Tiebout cycling a number of times to capture distribution
+        for trial in range(numTrials):
+            # initiate world specified by input parameters
             myWorld = World(numIssues=numIssues, numAgents=numAgents, numJurisdictions=numJurisdictions)
+            # run specified number of Tiebout cycles
             myWorld.cycle(numCycles)
-            temp = pd.Dataframe(myWorld.utility, columns=['cycle', 'utility'])
+            # build dataframe of utilities for this particular trial, then append to result data frame
+            temp = pd.DataFrame(myWorld.utility, columns=['cycle', 'utility'])
+            temp['institution'] = institution
+            temp['trial'] = trial
+            result = result.append(temp)
+
+    return result
 
 def main():
     numTrials = 200
     numCycles = 10
     # First test referendum for 1 jurisdiction
-    for _ in range(numTrials):
-        myWorld = World(numIssues=11, numAgents=1000, numJurisdictions=1)
-        myWorld.cycle(numCycles)
-
-    print(myWorld.utility)
+    # for _ in range(numTrials):
+    #     myWorld = World(numIssues=11, numAgents=1000, numJurisdictions=1)
+    #     myWorld.cycle(numCycles)
+    test = compareTiebout(numIssues=11, numAgents=1000, numJurisdictions=1,
+                          numTrials=200, numCycles=10, institutionList=['referendum'])
+    print(test)
 
 
 if __name__ == '__main__':
