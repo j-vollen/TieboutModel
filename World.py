@@ -15,9 +15,8 @@ import pandas as pd
 class World:
     """A set of jurisdictions and mobile agents."""
 
-    utility = []
-
     def __init__(self, numIssues, numAgents, numJurisdictions, institution='referendum'):
+        self.utility = []
         self._institution = institution
         self._numIssues = numIssues
         self._numAgents = numAgents
@@ -68,24 +67,26 @@ class World:
 """Runs Tiebout cycle specified number of times for specified number of trials for specified parameters.
     Repeats this process for each institution specified and combines all results into dataframe for output.
     NOTE: still need to add functionality of list of party counts"""
-def compareTiebout(numIssues, numAgents, numJurisdictions,
+def compareTiebout(numIssues, numAgents, jurisdictionCounts,
                    numTrials, numCycles, institutionList):
 
     # Empty shell of output dataframe
     result = pd.DataFrame()
     # Cycle through all institutions we want to summarize
     for institution in institutionList:
+        for numJurisdictions in jurisdictionCounts:
         # Need to repeat Tiebout cycling a number of times to capture distribution
-        for trial in range(numTrials):
-            # initiate world specified by input parameters
-            myWorld = World(numIssues=numIssues, numAgents=numAgents, numJurisdictions=numJurisdictions)
-            # run specified number of Tiebout cycles
-            myWorld.cycle(numCycles)
-            # build dataframe of utilities for this particular trial, then append to result data frame
-            temp = pd.DataFrame(myWorld.utility, columns=['cycle', 'utility'])
-            temp['institution'] = institution
-            temp['trial'] = trial
-            result = result.append(temp)
+            for trial in range(numTrials):
+                # initiate world specified by input parameters
+                myWorld = World(numIssues=numIssues, numAgents=numAgents, numJurisdictions=numJurisdictions)
+                # run specified number of Tiebout cycles
+                myWorld.cycle(numCycles)
+                # build dataframe of utilities for this particular trial, then append to result data frame
+                temp = pd.DataFrame(myWorld.utility, columns=['cycle', 'utility'])
+                temp['institution'] = institution
+                temp['trial'] = trial
+                temp['jurisdictions'] = numJurisdictions
+                result = result.append(temp)
 
     return result
 
@@ -96,8 +97,8 @@ def main():
     # for _ in range(numTrials):
     #     myWorld = World(numIssues=11, numAgents=1000, numJurisdictions=1)
     #     myWorld.cycle(numCycles)
-    test = compareTiebout(numIssues=11, numAgents=1000, numJurisdictions=1,
-                          numTrials=200, numCycles=10, institutionList=['referendum'])
+    test = compareTiebout(numIssues=11, numAgents=1000, jurisdictionCounts=3,
+                          numTrials=10, numCycles=10, institutionList=['referendum'])
     print(test)
 
 
