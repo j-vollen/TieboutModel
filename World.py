@@ -97,7 +97,7 @@ def main():
     # for _ in range(numTrials):
     #     myWorld = World(numIssues=11, numAgents=1000, numJurisdictions=1)
     #     myWorld.cycle(numCycles)
-    test = compareTiebout(numIssues=11, numAgents=1000, jurisdictionCounts=3,
+    test = compareTiebout(numIssues=11, numAgents=1000, jurisdictionCounts=1,
                           numTrials=10, numCycles=10, institutionList=['referendum'])
     print(test)
 
